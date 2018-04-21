@@ -50,3 +50,12 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+
+#binary files
+tp1
+a.out
+
+
+#vscode
+.vscode

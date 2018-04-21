@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <debug.h>
-#include <defs.h>
-#include <param.h>
+#include "debug.h"
+#include "defs.h"
+#include "param.h"
 
 #ifndef VERSION
 #define VERSION "0.0.1-cvs"
@@ -24,10 +24,11 @@
 #endif
 
 static void do_plot(void);
+extern void generic_plot(param_t *);
 extern void mips32_plot(param_t *);
 
 /*
- * Par�metros globales.
+ * Parametros globales.
  */
 
 int x_res = 640;              /* Ancho de imagen por defecto. */
@@ -109,7 +110,7 @@ static void parse_cmdline(int argc, char *const argv[]) {
     }
   }
 
-  if (plot == NULL) plot = &mips32_plot;
+  if (plot == NULL) plot = &generic_plot;
 
   if (output == NULL) output = stdout;
 }
@@ -270,8 +271,18 @@ static void do_width(const char *name, const char *spec) {
 }
 
 static void do_method(const char *name, const char *spec) {
-  fprintf(stderr, "do_method: notyet\n");
-  exit(1);
+  printf("name: %s , spec: %s\n", name, spec);
+  int generic_cmp = strcmp("generic", spec);
+  int mips32_cmp = strcmp("mips32", spec);
+  printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp , mips32_cmp);
+
+  if(generic_cmp == 0) plot = &generic_plot;
+  //if(mips32_cmp == 0) plot = &mips32_plot;
+
+  if(plot == NULL) {
+    fprintf(stderr, "Paramtro -m invalido!\n");
+    exit(1);
+  }
 }
 
 static void do_output(const char *name, const char *spec) {
