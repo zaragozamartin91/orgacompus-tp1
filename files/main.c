@@ -277,7 +277,7 @@ static void do_method(const char *name, const char *spec) {
   printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp , mips32_cmp);
 
   if(generic_cmp == 0) plot = &generic_plot;
-  //if(mips32_cmp == 0) plot = &mips32_plot;
+  if(mips32_cmp == 0) plot = &mips32_plot;
 
   if(plot == NULL) {
     fprintf(stderr, "Paramtro -m invalido!\n");
