@@ -1,10 +1,26 @@
 #include <mips/regdef.h>
 #include <sys/syscall.h>
-#define FRAME_SIZE 32
-#define REG_RA 28
-#define REG_FP 24
-#define REG_GP 20
-#define VAR_i 16
+
+#define FRAME_SIZE 80
+#define REG_RA 72
+#define REG_FP 68
+#define REG_GP 64
+
+#define VAR_UL_re 16
+#define VAR_UL_im 20
+#define VAR_LR_re 24
+#define VAR_LR_im 28
+#define VAR_d_re 32
+#define VAR_d_im 36
+#define VAR_s_re 40
+#define VAR_s_im 44
+#define VAR_x_res 48
+#define VAR_y_res 52
+#define VAR_shades 56
+#define VAR_fp 60
+
+# FRAME SIZE = 4 ARGS + 3 REGS + 12 VARS + 1 PADDING
+
 
                 .abicalls
                 .text
@@ -36,6 +52,8 @@ mips32_plot:
 
 $start:
                 print_string $foo_str
+
+
                 
 $cleanup:        
                 lw		ra, REG_RA(sp)
