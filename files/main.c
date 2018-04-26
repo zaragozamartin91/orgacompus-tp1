@@ -318,5 +318,19 @@ static void do_plot(void) {
   parms.shades = 256;
   parms.fp = output;
 
+  printf("Parametros de entrada:\n");
+  printf("parms.UL_re: %f\n", parms.UL_re);
+  printf("parms.UL_im: %f\n", parms.UL_im);
+  printf("parms.LR_re: %f\n", parms.LR_re);
+  printf("parms.LR_im: %f\n", parms.LR_im);
+  printf("parms.d_re: %f\n", parms.d_re);
+  printf("parms.d_im: %f\n", parms.d_im);
+  printf("parms.s_re: %f\n", parms.s_re);
+  printf("parms.s_im: %f\n", parms.s_im);
+
+  printf("parms.x_res: %d\n", parms.x_res);
+  printf("parms.y_res: %d\n", parms.y_res);
+  printf("parms.shades: %d\n", parms.shades);
+
   plot(&parms);
 }

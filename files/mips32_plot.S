@@ -56,6 +56,16 @@
                     syscall
                 .endm
 
+                #NOTA: RECORDAR RESTAURAR EL VALOR DE a0 LUEGO DE CADA PRINT!
+                # Imprime un numero entero
+                .macro print_int $reg $str
+                    la      a0, \$str		        # cargo la direccion de str en a0
+                    move    a1, \$reg		                
+                    la      t9,printf
+                    jal     ra,t9
+                .endm
+
+                #NOTA: RECORDAR RESTAURAR EL VALOR DE a0 LUEGO DE CADA PRINT!
                 # Imprime un float por STDOUT
                 # $freg0: registro con valor de float a imprimir
                 # $freg1: SIGUIENTE registro a $freg0
@@ -89,13 +99,82 @@ mips32_plot:
 $start:
                 print_string $foo_str
 
-                li		t1, 500
-                write_number t1 1
+                #li		t1, 500
+                #write_number t1 1
+                #lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                #l.s     $f0, 0(a0)                   # f0 = UL_re
+                #print_float $f0 , $f1 , $float_str
 
+$init_vars:
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
-                l.s     $f0, 0(a0)                   # f0 = UL_re
+                
+                # EXTRAIGO LOS CAMPOS DEL STRUCT param Y LAS GUARDO EN VARIABLES LOCALES
+                l.s		$f0, 0(a0)
+                s.s		$f0, VAR_UL_re($fp)
                 print_float $f0 , $f1 , $float_str
                 
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 4(a0)
+                s.s		$f0, VAR_UL_im($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 8(a0)
+                s.s		$f0, VAR_LR_re($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 12(a0)
+                s.s		$f0, VAR_LR_im($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 16(a0)
+                s.s		$f0, VAR_d_re($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 20(a0)
+                s.s		$f0, VAR_d_im($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 24(a0)
+                s.s		$f0, VAR_s_re($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                l.s		$f0, 28(a0)
+                s.s		$f0, VAR_s_im($fp)
+                print_float $f0 , $f1 , $float_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                lw		t0, 32($fp)
+                sw		t0, VAR_x_res($fp)
+                print_int t0 , $int_str
+
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                lw		t0, 36($fp)
+                sw		t0, VAR_y_res($fp)	
+                print_int t0 , $int_str
+                
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                lw		t0, 40($fp)
+                sw		t0, VAR_shades($fp)
+                print_int t0 , $int_str
+                	
+
+                #lw		t0, 44($fp)
+                #sw		t0, VAR_fp($fp)
+                #addi	t0, t0, 14			# t0 = direccion del fd
+                #lh	    t1, 0(t0)	        # t1 = fd
+                
+
+                #INICIALIZO LAS VARIABLES LOCALES DE LA FUNCION C 
+
+
 $cleanup:        
                 lw		ra, REG_RA(sp)
                 lw		gp, REG_GP(sp)
@@ -112,6 +191,7 @@ $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 
 
                 .align 0
 $float_str:     .asciiz "valor: %f\n"
+$int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "Hello world\n"
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
