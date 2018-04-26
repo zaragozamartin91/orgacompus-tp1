@@ -149,27 +149,21 @@ $init_vars:
                 l.s		$f0, 28(a0)
                 s.s		$f0, VAR_s_im($fp)
                 print_float $f0 , $f1 , $float_str
-                
+
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
-                lw		t0, 32($fp)
+                lw		t0, 32(a0)
                 sw		t0, VAR_x_res($fp)
                 print_int t0 , $int_str
 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
-                lw		t0, 36($fp)
+                lw		t0, 36(a0)
                 sw		t0, VAR_y_res($fp)	
                 print_int t0 , $int_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
-                lw		t0, 40($fp)
+                lw		t0, 40(a0)
                 sw		t0, VAR_shades($fp)
                 print_int t0 , $int_str
-                	
-
-                #lw		t0, 44($fp)
-                #sw		t0, VAR_fp($fp)
-                #addi	t0, t0, 14			# t0 = direccion del fd
-                #lh	    t1, 0(t0)	        # t1 = fd
                 
 
                 #INICIALIZO LAS VARIABLES LOCALES DE LA FUNCION C 
@@ -193,6 +187,8 @@ $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 
 $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "Hello world\n"
+$LC0:           .ascii  "shades: %d\n\000"
+
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
 $d2:            .ascii "2  \n"
