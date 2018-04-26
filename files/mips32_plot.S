@@ -2,9 +2,9 @@
 #include <sys/syscall.h>
 
 #define FRAME_SIZE 120
-#define REG_RA 112
-#define REG_FP 108
-#define REG_GP 104
+#define REG_RA 116
+#define REG_FP 112
+#define REG_GP 108
 
 #define VAR_UL_re 16
 #define VAR_UL_im 20
@@ -29,6 +29,8 @@
 #define VAR_x 92
 #define VAR_y 96
 #define VAR_c 100
+
+#define VAR_fd 104
 
 
 #define STDOUT 1
@@ -164,10 +166,31 @@ $init_vars:
                 lw		t0, 40(a0)
                 sw		t0, VAR_shades($fp)
                 print_int t0 , $int_str
-                
 
-                #INICIALIZO LAS VARIABLES LOCALES DE LA FUNCION C 
+                lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
+                lw		t0, 44(a0)
+                addi	t0, t0, 14			         # t0 = direccion del fd
+                lh	    t1, 0(t0)		             # t1 = fd
+                sh      t1, VAR_fd($fp)
 
+                lh      t0 , VAR_fd($fp)                
+                print_int t0 , $int_str
+
+                # INICIALIZO LAS VARIABLES LOCALES DE LA FUNCION C 
+
+                sw      zero , VAR_cr($fp)
+                sw      zero , VAR_ci($fp)
+                sw      zero , VAR_zr($fp)
+                sw      zero , VAR_zi($fp)
+                sw      zero , VAR_tr($fp)
+                sw      zero , VAR_ti($fp)
+                sw      zero , VAR_absz($fp)
+
+                sw      zero, VAR_x($fp)
+                sw      zero, VAR_y($fp)
+                sw      zero, VAR_c($fp)
+
+                # FIN DE INICIALIZACION DE VARIABLES
 
 $cleanup:        
                 lw		ra, REG_RA(sp)
@@ -186,8 +209,7 @@ $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 
                 .align 0
 $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
-$foo_str:       .asciiz "Hello world\n"
-$LC0:           .ascii  "shades: %d\n\000"
+$foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"

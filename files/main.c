@@ -332,5 +332,8 @@ static void do_plot(void) {
   printf("parms.y_res: %d\n", parms.y_res);
   printf("parms.shades: %d\n", parms.shades);
 
+  int fd = fileno(parms.fp);
+  printf("file descriptor is: %d\n", fd);
+
   plot(&parms);
 }
