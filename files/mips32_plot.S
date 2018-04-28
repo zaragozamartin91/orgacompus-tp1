@@ -82,12 +82,25 @@
                     jal     ra,t9
                 .endm
 
+                # Escribe una nueva linea en el file descriptor
                 .macro write_new_line
                     lh      a0, VAR_fd($fp)
                     la		a1, $new_line
                     li		a2, 1
                     li	    v0, SYS_write
                     syscall
+                .endm
+
+                # escribe por stdout un string "MARCA $mark"
+                .macro print_debug_mark $mark
+                    li		t0, \$mark
+                    print_int  t0 , $debug_str
+                .endm
+
+                # escribe por stdout el contenido de la variable y
+                .macro print_y
+                    lw		t0, VAR_y($fp)
+                    print_int t0 , $y_str
                 .endm
 
                 .align  2
@@ -232,6 +245,36 @@ $init_vars:
 
                 # FIN DE ESCRITURA DE ENCABEZADO ----------------------
 
+                # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im)
+
+                print_debug_mark 0
+
+                sw		zero, VAR_y($fp)        # y = 0
+                l.s     $f0, VAR_UL_im($fp)     # f0 = parms->UL_im
+                s.s     $f0, VAR_ci($fp)        # ci = parms->UL_im
+
+$for_y:         
+                print_y
+
+                # COMPLETAR CICLO y AQUI
+
+                lw		t0, VAR_y($fp)          # t0 = y
+                addi	t0, t0, 1               # t0 = y + 1
+                sw		t0, VAR_y($fp)          # y++
+
+                l.s     $f0, VAR_ci($fp)        # f0 = ci
+                l.s     $f2, VAR_d_im($fp)      # f2 = params->d_im
+                sub.s   $f4, $f0 , $f2          # f4 = ci - params->d_im
+                s.s     $f4 , VAR_ci($fp)       # ci -= parms->d_im
+
+
+                lw		t0, VAR_y($fp)	        # t0 = y
+                lw		t1, VAR_y_res($fp)      # t1 = y_res
+$for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
+                
+                                
+                
+
 $cleanup:        
                 lw		ra, REG_RA(sp)
                 lw		gp, REG_GP(sp)
@@ -250,6 +293,8 @@ $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 
 $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
+$debug_str:     .asciiz "MARCA: %d\n"
+$y_str:         .asciiz "y = %d\n"
 
 $P2_head:       .ascii "P2\n"
 $new_line:      .ascii "\n"
