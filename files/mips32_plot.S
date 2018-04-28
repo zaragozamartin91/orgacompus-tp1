@@ -82,6 +82,14 @@
                     jal     ra,t9
                 .endm
 
+                .macro write_new_line
+                    lh      a0, VAR_fd($fp)
+                    la		a1, $new_line
+                    li		a2, 1
+                    li	    v0, SYS_write
+                    syscall
+                .endm
+
                 .align  2
 
                 .globl  mips32_plot
@@ -200,11 +208,29 @@ $init_vars:
                 li	    v0, SYS_write
                 syscall
 
-                lw		a0, VAR_shades($fp)
+                lw		a0, VAR_x_res($fp)
                 lh      a1, VAR_fd($fp)
                 la	    t9, print_dnames
 	            jal	    ra, t9
-                
+
+                write_new_line
+
+                lw		a0, VAR_y_res($fp)
+                lh      a1, VAR_fd($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+
+                write_new_line
+
+                lw		a0, VAR_shades($fp)
+                subu    a0,a0,1
+                lh      a1, VAR_fd($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+
+                write_new_line
+
+                # FIN DE ESCRITURA DE ENCABEZADO ----------------------
 
 $cleanup:        
                 lw		ra, REG_RA(sp)
@@ -226,7 +252,7 @@ $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 
 $P2_head:       .ascii "P2\n"
-
+$new_line:      .ascii "\n"
 
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
