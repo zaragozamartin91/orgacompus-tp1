@@ -103,6 +103,12 @@
                     print_int t0 , $y_str
                 .endm
 
+                # escribe por stdout el contenido de la variable x
+                .macro print_x
+                    lw		t0, VAR_x($fp)
+                    print_int t0 , $x_str
+                .endm
+
                 .align  2
 
                 .globl  mips32_plot
@@ -212,9 +218,8 @@ $init_vars:
                 sw      zero, VAR_y($fp)
                 sw      zero, VAR_c($fp)
 
-                # FIN DE INICIALIZACION DE VARIABLES--------------
 
-                # ESCRIBO EL ENCABEZADO DEL ARCHIVO -------------
+                # ESCRIBO EL ENCABEZADO DEL ARCHIVO ------------------------------------------
                 lh      a0, VAR_fd($fp)
                 la		a1, $P2_head
                 li		a2, 3
@@ -243,12 +248,9 @@ $init_vars:
 
                 write_new_line
 
-                # FIN DE ESCRITURA DE ENCABEZADO ----------------------
+                # INICIO DEL CICLO FOR ------------------------------------------
 
                 # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im)
-
-                print_debug_mark 0
-
                 sw		zero, VAR_y($fp)        # y = 0
                 l.s     $f0, VAR_UL_im($fp)     # f0 = parms->UL_im
                 s.s     $f0, VAR_ci($fp)        # ci = parms->UL_im
@@ -256,19 +258,41 @@ $init_vars:
 $for_y:         
                 print_y
 
-                # COMPLETAR CICLO y AQUI
+                # PONER AQUI LOGICA DEL FOR 'y'
+                
+                # for (x = 0, cr = parms->UL_re; x < parms->x_res; ++x, cr += parms->d_re)
+                sw		zero, VAR_x($fp)        # x = 0
+                l.s     $f0, VAR_UL_re($fp)     # f0 = parms->UL_re
+                s.s     $f0, VAR_cr($fp)        # cr = parms->UL_re
+                
+$for_x:         
 
-                lw		t0, VAR_y($fp)          # t0 = y
-                addi	t0, t0, 1               # t0 = y + 1
-                sw		t0, VAR_y($fp)          # y++
+                print_x
+
+                # PONER AQUI LOGICA DEL FOR 'x'                
+                
+
+                l.s     $f0, VAR_cr($fp)        # f0 = cr
+                l.s     $f2, VAR_d_re($fp)      # f2 = parms->d_re
+                add.s   $f4, $f0, $f2           # f4 = cr + parms->d_re
+                s.s     $f4, VAR_cr($fp)        # cr += parms->d_re
+
+                lw		t0, VAR_x($fp)		    # t0 = x
+                addi	t0, t0, 1			    # t0 = x + 1
+                sw		t0, VAR_x($fp)  		# ++x 
+                lw		t1, VAR_x_res($fp)		# t1 = parms->x_res
+$for_x_end:     blt		t0, t1, $for_x      	# if t0 < t1 then $for_x
+                
+
 
                 l.s     $f0, VAR_ci($fp)        # f0 = ci
                 l.s     $f2, VAR_d_im($fp)      # f2 = params->d_im
                 sub.s   $f4, $f0 , $f2          # f4 = ci - params->d_im
                 s.s     $f4 , VAR_ci($fp)       # ci -= parms->d_im
 
-
-                lw		t0, VAR_y($fp)	        # t0 = y
+                lw		t0, VAR_y($fp)          # t0 = y
+                addi	t0, t0, 1               # t0 = y + 1
+                sw		t0, VAR_y($fp)          # y++
                 lw		t1, VAR_y_res($fp)      # t1 = y_res
 $for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
                 
@@ -294,7 +318,9 @@ $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 $debug_str:     .asciiz "MARCA: %d\n"
+
 $y_str:         .asciiz "y = %d\n"
+$x_str:         .asciiz "x = %d\n"
 
 $P2_head:       .ascii "P2\n"
 $new_line:      .ascii "\n"
