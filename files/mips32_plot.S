@@ -30,12 +30,13 @@
 #define VAR_y 96
 #define VAR_c 100
 
+
 #define VAR_fd 104
 
 
 #define STDOUT 1
 
-# ------ FRAME SIZE = 4 ARGS + 3 REGS + 22 VARS + 1 PADDING
+
 
 
                 .abicalls
@@ -190,7 +191,20 @@ $init_vars:
                 sw      zero, VAR_y($fp)
                 sw      zero, VAR_c($fp)
 
-                # FIN DE INICIALIZACION DE VARIABLES
+                # FIN DE INICIALIZACION DE VARIABLES--------------
+
+                # ESCRIBO EL ENCABEZADO DEL ARCHIVO -------------
+                lh      a0, VAR_fd($fp)
+                la		a1, $P2_head
+                li		a2, 3
+                li	    v0, SYS_write
+                syscall
+
+                lw		a0, VAR_shades($fp)
+                lh      a1, VAR_fd($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+                
 
 $cleanup:        
                 lw		ra, REG_RA(sp)
@@ -210,6 +224,9 @@ $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 
 $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
+
+$P2_head:       .ascii "P2\n"
+
 
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"

@@ -336,4 +336,6 @@ static void do_plot(void) {
   printf("file descriptor is: %d\n", fd);
 
   plot(&parms);
+
+  if(fd > 2) fclose(parms.fp);
 }
