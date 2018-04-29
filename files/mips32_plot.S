@@ -299,10 +299,9 @@ $for_c:
                 add.s   $f4 , $f2 , $f0         # f4 = zr * zr + zi * zi
                 s.s     $f4 , VAR_absz($fp)     # absz = zr * zr + zi * zi
                 l.s     $f6 , $float_four       # f6 = 4.0
-                l.s     $f10 , VAR_absz($fp)
-                print_float $f10,$f11,$absz_str
-                c.le.s  $f6,$f4
+                c.lt.s  $f6,$f4                 # si f6 < f4 entonces SET TRUE
                 bc1t    $for_c_end
+                print_string $clt4_str
                 
 
                 # tr = parms->s_re + zr * zr - zi * zi;
@@ -349,6 +348,8 @@ $for_c_end:
                 li		a2, 4		            # a2 =4 
                 li	    v0, SYS_write
                 syscall
+
+                print_string $digwrite_str
                 
 
                 l.s     $f0, VAR_cr($fp)        # f0 = cr
@@ -404,6 +405,8 @@ $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 $debug_str:     .asciiz "MARCA: %d\n"
 $absz_str:      .asciiz "absz: %f\n"
+$clt4_str:      .asciiz "c < 4.0f\n"
+$digwrite_str:  .asciiz "DIGITO+\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"

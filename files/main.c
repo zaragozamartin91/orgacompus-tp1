@@ -337,5 +337,6 @@ static void do_plot(void) {
 
   plot(&parms);
 
+  fflush(parms.fp); // todo : remover
   if(fd > 2) fclose(parms.fp);
 }
