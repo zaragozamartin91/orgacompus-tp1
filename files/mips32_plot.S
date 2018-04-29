@@ -133,12 +133,7 @@ mips32_plot:
 
 $start:
                 print_string $foo_str
-
-                #li		t1, 500
-                #write_number t1 1
-                #lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
-                #l.s     $f0, 0(a0)                   # f0 = UL_re
-                #print_float $f0 , $f1 , $float_str
+                
 
 $init_vars:
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
@@ -274,7 +269,6 @@ $init_vars:
 $for_y:         
                 print_y
 
-                # PONER AQUI LOGICA DEL FOR 'y'
                 
                 # for (x = 0, cr = parms->UL_re; x < parms->x_res; ++x, cr += parms->d_re)
                 sw		zero, VAR_x($fp)        # x = 0
@@ -285,7 +279,12 @@ $for_x:
 
                 print_x
 
-                # PONER AQUI LOGICA DEL FOR 'x'                
+                l.s $f0,VAR_cr($fp)             # f0 = cr
+                s.s $f0,VAR_zr($fp)             # zr = cr
+                l.s $f2,VAR_ci($fp)             # f2 = ci
+                s.s $f2,VAR_zi($fp)             # zi = ci
+
+                      
                 # for (c = 0; c < parms->shades; ++c)
                 sw		zero, VAR_c($fp)		# c = 0
 
