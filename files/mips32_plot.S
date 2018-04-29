@@ -109,6 +109,11 @@
                     print_int t0 , $x_str
                 .endm
 
+                .macro print_c
+                    lw		t0, VAR_c($fp)
+                    print_int t0 , $c_str
+                .endm
+
                 .align  2
 
                 .globl  mips32_plot
@@ -248,6 +253,17 @@ $init_vars:
 
                 write_new_line
 
+
+                # prueba de escritura de archivo ---------------------------------------
+                #la		t0, $dnames
+                #lh      a0, VAR_fd($fp)
+                #move 	a1, t0
+                #li		a2, 1		            # a2 = 1
+                #li		v0, SYS_write   		# v0 = SYS_write
+                #syscall
+                # fin de prueba de escritura de archivo ---------------------------------------
+
+
                 # INICIO DEL CICLO FOR ------------------------------------------
 
                 # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im)
@@ -270,6 +286,70 @@ $for_x:
                 print_x
 
                 # PONER AQUI LOGICA DEL FOR 'x'                
+                # for (c = 0; c < parms->shades; ++c)
+                sw		zero, VAR_c($fp)		# c = 0
+
+$for_c:
+                print_c
+
+                # __if ((absz = zr * zr + zi * zi) >= 4.0f) break;
+                l.s     $f0 , VAR_zr($fp)       # f0 = zr
+                l.s     $f2 , VAR_zi($fp)       # f2 = zi
+                mul.s   $f0 , $f0 , $f0         # f0 = zr * zr                
+                mul.s   $f2 , $f2 , $f2         # f2 = zi * zi
+                add.s   $f4 , $f2 , $f0         # f4 = zr * zr + zi * zi
+                s.s     $f4 , VAR_absz($fp)     # absz = zr * zr + zi * zi
+                l.s     $f6 , $float_four       # f6 = 4.0
+                l.s     $f10 , VAR_absz($fp)
+                print_float $f10,$f11,$absz_str
+                c.le.s  $f6,$f4
+                bc1t    $for_c_end
+                
+
+                # tr = parms->s_re + zr * zr - zi * zi;
+                l.s     $f0 , VAR_zr($fp)       # f0 = zr
+                l.s     $f2 , VAR_zi($fp)       # f2 = zi
+                mul.s   $f0 , $f0 , $f0         # f0 = zr * zr                
+                mul.s   $f2 , $f2 , $f2         # f2 = zi * zi
+                l.s     $f4 , VAR_s_re($fp)     # f4 = parms->s_re
+                add.s   $f6 , $f4 , $f0         # f6 = parms->s_re + zr * zr
+                sub.s   $f8 , $f6 , $f2         # f8 = parms->s_re + zr * zr - zi * zi
+                s.s     $f8 , VAR_tr($fp)       # tr = parms->s_re + zr * zr - zi * zi
+
+                # ti = parms->s_im + zr * zi * 2.0f;
+                l.s     $f0 , VAR_zr($fp)       # f0 = zr
+                l.s     $f2 , VAR_zi($fp)       # f2 = zi
+                l.s     $f4 , VAR_s_im($fp)     # f4 = parms->s_im
+                l.s     $f6 , $float_two        # f6 = 2.0f
+                mul.s   $f0 , $f0 , $f2         # f0 = zr * zi
+                mul.s   $f0 , $f0 , $f6         # f0 = zr * zi * 2.0f
+                add.s   $f0 , $f0 , $f4         # f0 = parms->s_im + zr * zi * 2.0f
+                s.s     $f0 , VAR_ti($fp)       # ti = parms->s_im + zr * zi * 2.0f
+
+                s.s     $f8 , VAR_zr($fp)       # zr = tr
+                s.s     $f0 , VAR_zi($fp)       # zi = ti
+
+
+                lw		t0 , VAR_c($fp)         # t0 = c
+                addi	t0, t0, 1   			# t0 = c + 1
+                sw		t0, VAR_c($fp)  		# ++c
+                lw		t1, VAR_shades($fp)		# t1 = parms->shades
+                blt		t0, t1, $for_c	        # if c < parms->shades then $for_c
+
+$for_c_end:
+                
+                # fprintf(parms->fp, "%u\n", (unsigned)c)
+                lw		t0, VAR_c($fp)		    # t0 = c
+                sll     t0 , t0 , 2             # t0 = c * 4
+                la		t2, $dnames		        # t2 = $dnames
+                add		t3, t0, t2      		# t3 = $dnames[c]
+                lw		t4, 0(t3)               # t4 = direccion de palabra a escribir
+                
+                lh      a0, VAR_fd($fp)         # a0 = fd
+                move 	a1, t4		            # a1 = t4
+                li		a2, 4		            # a2 =4 
+                li	    v0, SYS_write
+                syscall
                 
 
                 l.s     $f0, VAR_cr($fp)        # f0 = cr
@@ -313,17 +393,26 @@ $cleanup:
                 .align 2
 $dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 , $d10 , $d11 , $d12 , $d13 , $d14 , $d15 , $d16 , $d17 , $d18 , $d19 , $d20 , $d21 , $d22 , $d23 , $d24 , $d25 , $d26 , $d27 , $d28 , $d29 , $d30 , $d31 , $d32 , $d33 , $d34 , $d35 , $d36 , $d37 , $d38 , $d39 , $d40 , $d41 , $d42 , $d43 , $d44 , $d45 , $d46 , $d47 , $d48 , $d49 , $d50 , $d51 , $d52 , $d53 , $d54 , $d55 , $d56 , $d57 , $d58 , $d59 , $d60 , $d61 , $d62 , $d63 , $d64 , $d65 , $d66 , $d67 , $d68 , $d69 , $d70 , $d71 , $d72 , $d73 , $d74 , $d75 , $d76 , $d77 , $d78 , $d79 , $d80 , $d81 , $d82 , $d83 , $d84 , $d85 , $d86 , $d87 , $d88 , $d89 , $d90 , $d91 , $d92 , $d93 , $d94 , $d95 , $d96 , $d97 , $d98 , $d99 , $d100 , $d101 , $d102 , $d103 , $d104 , $d105 , $d106 , $d107 , $d108 , $d109 , $d110 , $d111 , $d112 , $d113 , $d114 , $d115 , $d116 , $d117 , $d118 , $d119 , $d120 , $d121 , $d122 , $d123 , $d124 , $d125 , $d126 , $d127 , $d128 , $d129 , $d130 , $d131 , $d132 , $d133 , $d134 , $d135 , $d136 , $d137 , $d138 , $d139 , $d140 , $d141 , $d142 , $d143 , $d144 , $d145 , $d146 , $d147 , $d148 , $d149 , $d150 , $d151 , $d152 , $d153 , $d154 , $d155 , $d156 , $d157 , $d158 , $d159 , $d160 , $d161 , $d162 , $d163 , $d164 , $d165 , $d166 , $d167 , $d168 , $d169 , $d170 , $d171 , $d172 , $d173 , $d174 , $d175 , $d176 , $d177 , $d178 , $d179 , $d180 , $d181 , $d182 , $d183 , $d184 , $d185 , $d186 , $d187 , $d188 , $d189 , $d190 , $d191 , $d192 , $d193 , $d194 , $d195 , $d196 , $d197 , $d198 , $d199 , $d200 , $d201 , $d202 , $d203 , $d204 , $d205 , $d206 , $d207 , $d208 , $d209 , $d210 , $d211 , $d212 , $d213 , $d214 , $d215 , $d216 , $d217 , $d218 , $d219 , $d220 , $d221 , $d222 , $d223 , $d224 , $d225 , $d226 , $d227 , $d228 , $d229 , $d230 , $d231 , $d232 , $d233 , $d234 , $d235 , $d236 , $d237 , $d238 , $d239 , $d240 , $d241 , $d242 , $d243 , $d244 , $d245 , $d246 , $d247 , $d248 , $d249 , $d250 , $d251 , $d252 , $d253 , $d254 , $d255
 
+# VALOR 4.0f
+$float_four:    .word   1082130432
+# VALOR 2.0f
+$float_two:     .word   1073741824
+
+
                 .align 0
 $float_str:     .asciiz "valor: %f\n"
 $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 $debug_str:     .asciiz "MARCA: %d\n"
+$absz_str:      .asciiz "absz: %f\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"
+$c_str:         .asciiz "c = %d\n"
 
 $P2_head:       .ascii "P2\n"
 $new_line:      .ascii "\n"
+
 
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
