@@ -33,7 +33,7 @@
 
 #define VAR_fd 104
 
-#define VAR_buff_count 108
+#define VAR_foo 108
 
 
 #define STDOUT 1
@@ -262,8 +262,6 @@ $init_vars:
 	            jal	    ra, t9
 
                 write_new_line
-
-                sw		zero, VAR_buff_count($fp)
                 
 
                 # INICIO DEL CICLO FOR ------------------------------------------
@@ -274,7 +272,7 @@ $init_vars:
                 s.s     $f0, VAR_ci($fp)        # ci = parms->UL_im
 
 $for_y:         
-                # print_y
+                print_y
                 
                 # for (x = 0, cr = parms->UL_re; x < parms->x_res; ++x, cr += parms->d_re)
                 sw		zero, VAR_x($fp)        # x = 0
@@ -283,7 +281,7 @@ $for_y:
                 
 $for_x:         
 
-                # print_x
+                print_x
 
                 l.s $f0,VAR_cr($fp)             # f0 = cr
                 s.s $f0,VAR_zr($fp)             # zr = cr
@@ -304,12 +302,15 @@ $for_c:
                 mul.s   $f2 , $f2 , $f2         # f2 = zi * zi
                 add.s   $f4 , $f2 , $f0         # f4 = zr * zr + zi * zi
                 s.s     $f4 , VAR_absz($fp)     # absz = zr * zr + zi * zi
-                l.s     $f6 , $float_four       # f6 = 4.0
                 l.s     $f10 , VAR_absz($fp)
                 print_float $f10 , $f11 , $absz_str
-                c.lt.s  $f6,$f4                 # si f6 < f4 entonces SET TRUE
+
+                l.s     $f2 , VAR_absz($fp)     # f2 = absz
+                l.s     $f0 , $float_four       # f0 = 4.0
+                c.lt.s  $f0,$f2                 # si f0 < f2 entonces SET TRUE
                 bc1t    $for_c_end
                 nop
+
                 print_string $abszlt4_str
                 
 
@@ -392,12 +393,17 @@ $for_x_end:     blt		t0, t1, $for_x      	# if t0 < t1 then $for_x
 $for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
                 nop
                 
+
+                sw		zero, VAR_foo($fp)
+
+
+                print_string $closefile_str
                 
                 # CIERRO EL ARCHIVO                
                 lh      a0 , VAR_fd($fp)
                 li		v0, SYS_close
                 syscall
-
+                print_int   v0 , $int_str
 
 $cleanup:        
                 lw		ra, REG_RA(sp)
@@ -410,7 +416,7 @@ $cleanup:
 
                 .data
                 .align 2
-$dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 , $d10 , $d11 , $d12 , $d13 , $d14 , $d15 , $d16 , $d17 , $d18 , $d19 , $d20 , $d21 , $d22 , $d23 , $d24 , $d25 , $d26 , $d27 , $d28 , $d29 , $d30 , $d31 , $d32 , $d33 , $d34 , $d35 , $d36 , $d37 , $d38 , $d39 , $d40 , $d41 , $d42 , $d43 , $d44 , $d45 , $d46 , $d47 , $d48 , $d49 , $d50 , $d51 , $d52 , $d53 , $d54 , $d55 , $d56 , $d57 , $d58 , $d59 , $d60 , $d61 , $d62 , $d63 , $d64 , $d65 , $d66 , $d67 , $d68 , $d69 , $d70 , $d71 , $d72 , $d73 , $d74 , $d75 , $d76 , $d77 , $d78 , $d79 , $d80 , $d81 , $d82 , $d83 , $d84 , $d85 , $d86 , $d87 , $d88 , $d89 , $d90 , $d91 , $d92 , $d93 , $d94 , $d95 , $d96 , $d97 , $d98 , $d99 , $d100 , $d101 , $d102 , $d103 , $d104 , $d105 , $d106 , $d107 , $d108 , $d109 , $d110 , $d111 , $d112 , $d113 , $d114 , $d115 , $d116 , $d117 , $d118 , $d119 , $d120 , $d121 , $d122 , $d123 , $d124 , $d125 , $d126 , $d127 , $d128 , $d129 , $d130 , $d131 , $d132 , $d133 , $d134 , $d135 , $d136 , $d137 , $d138 , $d139 , $d140 , $d141 , $d142 , $d143 , $d144 , $d145 , $d146 , $d147 , $d148 , $d149 , $d150 , $d151 , $d152 , $d153 , $d154 , $d155 , $d156 , $d157 , $d158 , $d159 , $d160 , $d161 , $d162 , $d163 , $d164 , $d165 , $d166 , $d167 , $d168 , $d169 , $d170 , $d171 , $d172 , $d173 , $d174 , $d175 , $d176 , $d177 , $d178 , $d179 , $d180 , $d181 , $d182 , $d183 , $d184 , $d185 , $d186 , $d187 , $d188 , $d189 , $d190 , $d191 , $d192 , $d193 , $d194 , $d195 , $d196 , $d197 , $d198 , $d199 , $d200 , $d201 , $d202 , $d203 , $d204 , $d205 , $d206 , $d207 , $d208 , $d209 , $d210 , $d211 , $d212 , $d213 , $d214 , $d215 , $d216 , $d217 , $d218 , $d219 , $d220 , $d221 , $d222 , $d223 , $d224 , $d225 , $d226 , $d227 , $d228 , $d229 , $d230 , $d231 , $d232 , $d233 , $d234 , $d235 , $d236 , $d237 , $d238 , $d239 , $d240 , $d241 , $d242 , $d243 , $d244 , $d245 , $d246 , $d247 , $d248 , $d249 , $d250 , $d251 , $d252 , $d253 , $d254 , $d255
+$dnames:        .word $d0 , $d1 , $d2 , $d3 , $d4 , $d5 , $d6 , $d7 , $d8 , $d9 , $d10 , $d11 , $d12 , $d13 , $d14 , $d15 , $d16 , $d17 , $d18 , $d19 , $d20 , $d21 , $d22 , $d23 , $d24 , $d25 , $d26 , $d27 , $d28 , $d29 , $d30 , $d31 , $d32 , $d33 , $d34 , $d35 , $d36 , $d37 , $d38 , $d39 , $d40 , $d41 , $d42 , $d43 , $d44 , $d45 , $d46 , $d47 , $d48 , $d49 , $d50 , $d51 , $d52 , $d53 , $d54 , $d55 , $d56 , $d57 , $d58 , $d59 , $d60 , $d61 , $d62 , $d63 , $d64 , $d65 , $d66 , $d67 , $d68 , $d69 , $d70 , $d71 , $d72 , $d73 , $d74 , $d75 , $d76 , $d77 , $d78 , $d79 , $d80 , $d81 , $d82 , $d83 , $d84 , $d85 , $d86 , $d87 , $d88 , $d89 , $d90 , $d91 , $d92 , $d93 , $d94 , $d95 , $d96 , $d97 , $d98 , $d99 , $d100 , $d101 , $d102 , $d103 , $d104 , $d105 , $d106 , $d107 , $d108 , $d109 , $d110 , $d111 , $d112 , $d113 , $d114 , $d115 , $d116 , $d117 , $d118 , $d119 , $d120 , $d121 , $d122 , $d123 , $d124 , $d125 , $d126 , $d127 , $d128 , $d129 , $d130 , $d131 , $d132 , $d133 , $d134 , $d135 , $d136 , $d137 , $d138 , $d139 , $d140 , $d141 , $d142 , $d143 , $d144 , $d145 , $d146 , $d147 , $d148 , $d149 , $d150 , $d151 , $d152 , $d153 , $d154 , $d155 , $d156 , $d157 , $d158 , $d159 , $d160 , $d161 , $d162 , $d163 , $d164 , $d165 , $d166 , $d167 , $d168 , $d169 , $d170 , $d171 , $d172 , $d173 , $d174 , $d175 , $d176 , $d177 , $d178 , $d179 , $d180 , $d181 , $d182 , $d183 , $d184 , $d185 , $d186 , $d187 , $d188 , $d189 , $d190 , $d191 , $d192 , $d193 , $d194 , $d195 , $d196 , $d197 , $d198 , $d199 , $d200 , $d201 , $d202 , $d203 , $d204 , $d205 , $d206 , $d207 , $d208 , $d209 , $d210 , $d211 , $d212 , $d213 , $d214 , $d215 , $d216 , $d217 , $d218 , $d219 , $d220 , $d221 , $d222 , $d223 , $d224 , $d225 , $d226 , $d227 , $d228 , $d229 , $d230 , $d231 , $d232 , $d233 , $d234 , $d235 , $d236 , $d237 , $d238 , $d239 , $d240 , $d241 , $d242 , $d243 , $d244 , $d245 , $d246 , $d247 , $d248 , $d249 , $d250 , $d251 , $d252 , $d253 , $d254 , $d255 , $d256
 
 # VALOR 4.0f
 $float_four:    .word   1082130432
@@ -430,6 +436,7 @@ $ch_written_str: .asciiz "caracteres escritos: %d\n"
 $forc_end_str:  .asciiz "FOR_C END!\n"
 $four_str:      .asciiz "four: %f\n"
 $two_str:       .asciiz "two: %f\n"
+$closefile_str: .asciiz "CERRANDO ARCHIVO!\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"
@@ -696,4 +703,5 @@ $d252:          .ascii "252\n"
 $d253:          .ascii "253\n"
 $d254:          .ascii "254\n"
 $d255:          .ascii "255\n"
+$d256:          .ascii "256\n"
 
