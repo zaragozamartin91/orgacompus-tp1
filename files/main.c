@@ -327,7 +327,6 @@ static void do_plot(void) {
   printf("parms.d_im: %f\n", parms.d_im);
   printf("parms.s_re: %f\n", parms.s_re);
   printf("parms.s_im: %f\n", parms.s_im);
-
   printf("parms.x_res: %d\n", parms.x_res);
   printf("parms.y_res: %d\n", parms.y_res);
   printf("parms.shades: %d\n", parms.shades);
@@ -337,6 +336,6 @@ static void do_plot(void) {
 
   plot(&parms);
 
-  fflush(parms.fp); // todo : remover
-  if(fd > 2) fclose(parms.fp);
+  //fflush(parms.fp); // todo : remover
+  //if(fd > 2) fclose(parms.fp);
 }
