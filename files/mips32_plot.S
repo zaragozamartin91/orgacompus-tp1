@@ -35,7 +35,7 @@
 
 #define VAR_word_count 108
 
-#define BUFFER_LIMIT 100
+#define BUFFER_LIMIT 256
 
 
 #define STDOUT 1
@@ -793,7 +793,7 @@ $d255:          .ascii "255\n"
 $d256:          .ascii "256\n"
 
                 .align 2
-BUFFER:         .space 400
+BUFFER:         .space 1024
 
 
 
