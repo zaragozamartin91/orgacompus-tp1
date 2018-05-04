@@ -94,15 +94,6 @@
                     jal     ra,t9
                 .endm
 
-                # Escribe una nueva linea en el file descriptor
-                .macro write_new_line
-                    lh      a0, VAR_fd($fp)
-                    la		a1, $new_line
-                    li		a2, 1
-                    li	    v0, SYS_write
-                    syscall
-                .endm
-
                 # escribe por stdout un string "MARCA $mark"
                 .macro print_debug_mark $mark
                     li		t0, \$mark
@@ -235,40 +226,95 @@ $init_vars:
                 sw      zero, VAR_y($fp)
                 sw      zero, VAR_c($fp)
 
-
-                # ESCRIBO EL ENCABEZADO DEL ARCHIVO ------------------------------------------
-                lh      a0, VAR_fd($fp)
-                la		a1, $P2_head
-                li		a2, 3
-                li	    v0, SYS_write
-                syscall
-
-                lw		a0, VAR_x_res($fp)
-                lh      a1, VAR_fd($fp)
-                la	    t9, print_dnames
-	            jal	    ra, t9
-
-                write_new_line
-
-                lw		a0, VAR_y_res($fp)
-                lh      a1, VAR_fd($fp)
-                la	    t9, print_dnames
-	            jal	    ra, t9
-
-                write_new_line
-
-                lw		a0, VAR_shades($fp)
-                subu    a0,a0,1
-                lh      a1, VAR_fd($fp)
-                la	    t9, print_dnames
-	            jal	    ra, t9
-
-                write_new_line
-                
                 # inicializo el contador de palabras a escribir
                 sw		zero, VAR_word_count($fp)
 
-                # INICIO DEL CICLO FOR ------------------------------------------
+
+                # COMIENZO DE ESCRITURA DE ENCABEZADO ----------------------------------------------
+                la		t0, $P2_head                # t0 = P2_HEAD*
+                lw		t1, 0(t0)                   # t1 = P2_HEAD
+                lw		t2, VAR_word_count($fp)		# t2 = word_count
+                la		t3, BUFFER                  # t3 = BUFFER*
+                add		t4, t3, t2                  # t4 = BUFFER[word_count]
+                sw		t1, 0(t4)
+                add		t2, t2, 4
+                sw		t2, VAR_word_count($fp)	    # word_count += 4 
+                
+                
+
+                lw		a0, VAR_x_res($fp)
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
+
+                
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
+
+
+
+                lw		a0, VAR_y_res($fp)
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
+                
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
+
+
+
+
+                lw		a0, VAR_shades($fp)
+                subu    a0,a0,1
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
+                la	    t9, print_dnames
+	            jal	    ra, t9
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
+                
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
+
+
+
+                # ESCRIBO EL ENCABEZADO DEL PGM EN EL ARCHIVO
+                lh      a0, VAR_fd($fp)             # a0 = fd
+                la		a1, BUFFER		            # a1 = BUFFER* 
+                lw		a2, VAR_word_count($fp)		# a2 = word_count
+                li	    v0, SYS_write
+                syscall
+
+                
+                # RESETEO el contador de palabras a escribir
+                sw		zero, VAR_word_count($fp)
+
+
+                # INICIO DEL CICLO FOR ---------------------------------------------------
 
                 # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im)
                 sw		zero, VAR_y($fp)        # y = 0
@@ -486,11 +532,8 @@ $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"
 $c_str:         .asciiz "c = %d\n"
 
-$P2_head:       .ascii "P2\n"
-$new_line:      .ascii "\n"
-
-
                 .align 2
+$P2_head:       .ascii "P2 \n"
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
 $d2:            .ascii "2  \n"
