@@ -23,6 +23,13 @@
 #define optional_argument 2
 #endif
 
+#define PLUS_OR_MINUS(c)  ((c) == '+' || (c) == '-')
+#define IMAGINARY_UNIT(x) ((x) == 'i' || (x) == 'j')
+
+#define MINIMUM(x, y) ((x) <= (y) ? (x) : (y))
+#define MAXIMUM(x, y) ((x) >= (y) ? (x) : (y))
+#define SIGN(c) ((c) == '-' ? -1.0 : +1.0)
+
 static void do_plot(void);
 extern void generic_plot(param_t *);
 extern void mips32_plot(param_t *);
@@ -164,44 +171,16 @@ static void do_resolution(const char *name, const char *spec) {
 }
 
 static void do_seed(const char *name, const char *spec) {
-  double re_1, im_1;
-  double re_2, im_2;
-  char comma;
-  char sg_1;
-  char sg_2;
-  char ii_1;
-  char ii_2;
-  char ch;
-
-#define PLUS_OR_MINUS(c) ((c) == '+' || (c) == '-')
-#define IMAGINARY_UNIT(x) ((x) == 'i' || (x) == 'j')
-
-  if (sscanf(spec, "%lf %c %lf %c %c %lf %c %lf %c %c", &re_1, &sg_1, &im_1,
-             &ii_1, &comma, &re_2, &sg_2, &im_2, &ii_2, &ch) != 9 ||
-      !PLUS_OR_MINUS(sg_1) || !PLUS_OR_MINUS(sg_2) || !IMAGINARY_UNIT(ii_1) ||
-      !IMAGINARY_UNIT(ii_2) || comma != ',') {
+  double re;
+  double im;
+  int parseRes = sscanf(spec, "%lf%lf", &re, &im);
+  if (parseRes == 2) {
+    seed_re = re;
+    seed_im = im;
+  } else {
     fprintf(stderr, "invalid seed specification.\n");
     exit(1);
   }
-
-#define MINIMUM(x, y) ((x) <= (y) ? (x) : (y))
-#define MAXIMUM(x, y) ((x) >= (y) ? (x) : (y))
-#define SIGN(c) ((c) == '-' ? -1.0 : +1.0)
-
-  /* Sign-adjust. */
-  im_1 *= SIGN(sg_1);
-  im_2 *= SIGN(sg_2);
-
-  /*
-   * We have two edges of the rectangle. Now, find the upper-left
-   * (i.e. the one with minimum real part and maximum imaginary
-   * part) and lower-right (maximum real part, minimum imaginary)
-   * corners of the rectangle.
-   */
-  upper_left_re = MINIMUM(re_1, re_2);
-  upper_left_im = MAXIMUM(im_1, im_2);
-  lower_right_re = MAXIMUM(re_1, re_2);
-  lower_right_im = MINIMUM(im_1, im_2);
 }
 
 static void do_center(const char *name, const char *spec) {
@@ -274,12 +253,12 @@ static void do_method(const char *name, const char *spec) {
   printf("name: %s , spec: %s\n", name, spec);
   int generic_cmp = strcmp("generic", spec);
   int mips32_cmp = strcmp("mips32", spec);
-  printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp , mips32_cmp);
+  printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp, mips32_cmp);
 
-  if(generic_cmp == 0) plot = &generic_plot;
-  if(mips32_cmp == 0) plot = &mips32_plot;
+  if (generic_cmp == 0) plot = &generic_plot;
+  if (mips32_cmp == 0) plot = &mips32_plot;
 
-  if(plot == NULL) {
+  if (plot == NULL) {
     fprintf(stderr, "Paramtro -m invalido!\n");
     exit(1);
   }
@@ -336,6 +315,6 @@ static void do_plot(void) {
 
   plot(&parms);
 
-  //fflush(parms.fp); // todo : remover
-  //if(fd > 2) fclose(parms.fp);
+  // fflush(parms.fp); // todo : remover
+  // if(fd > 2) fclose(parms.fp);
 }
