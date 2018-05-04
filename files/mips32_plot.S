@@ -33,7 +33,9 @@
 
 #define VAR_fd 104
 
-#define VAR_foo 108
+#define VAR_word_count 108
+
+#define BUFFER_LIMIT 100
 
 
 #define STDOUT 1
@@ -90,15 +92,6 @@
                     mfc1    a3,\$freg1
                     la      t9,printf
                     jal     ra,t9
-                .endm
-
-                # Escribe una nueva linea en el file descriptor
-                .macro write_new_line
-                    lh      a0, VAR_fd($fp)
-                    la		a1, $new_line
-                    li		a2, 1
-                    li	    v0, SYS_write
-                    syscall
                 .endm
 
                 # escribe por stdout un string "MARCA $mark"
@@ -233,38 +226,95 @@ $init_vars:
                 sw      zero, VAR_y($fp)
                 sw      zero, VAR_c($fp)
 
+                # inicializo el contador de palabras a escribir
+                sw		zero, VAR_word_count($fp)
 
-                # ESCRIBO EL ENCABEZADO DEL ARCHIVO ------------------------------------------
-                lh      a0, VAR_fd($fp)
-                la		a1, $P2_head
-                li		a2, 3
-                li	    v0, SYS_write
-                syscall
+
+                # COMIENZO DE ESCRITURA DE ENCABEZADO ----------------------------------------------
+                la		t0, $P2_head                # t0 = P2_HEAD*
+                lw		t1, 0(t0)                   # t1 = P2_HEAD
+                lw		t2, VAR_word_count($fp)		# t2 = word_count
+                la		t3, BUFFER                  # t3 = BUFFER*
+                add		t4, t3, t2                  # t4 = BUFFER[word_count]
+                sw		t1, 0(t4)
+                add		t2, t2, 4
+                sw		t2, VAR_word_count($fp)	    # word_count += 4 
+                
+                
 
                 lw		a0, VAR_x_res($fp)
-                lh      a1, VAR_fd($fp)
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
                 la	    t9, print_dnames
 	            jal	    ra, t9
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
 
-                write_new_line
+                
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
+
+
 
                 lw		a0, VAR_y_res($fp)
-                lh      a1, VAR_fd($fp)
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
                 la	    t9, print_dnames
 	            jal	    ra, t9
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
+                
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
 
-                write_new_line
+
+
 
                 lw		a0, VAR_shades($fp)
                 subu    a0,a0,1
-                lh      a1, VAR_fd($fp)
+                la      a1, BUFFER
+                lw		a2, VAR_word_count($fp)
                 la	    t9, print_dnames
 	            jal	    ra, t9
-
-                write_new_line
+                sw		v0, VAR_word_count($fp)     
+                print_int v0 $word_count_str
                 
+                li		t0, 10		                # t0 = \n
+                la		t1, BUFFER                  # t1 = BUFFER*
+                lw		t2, VAR_word_count($fp)     # t2 = word_count
+                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                addi	t2, t2, 1			        # t2 = word_count + 1
+                sw		t2, VAR_word_count($fp)		# word_count++
+                print_int t2 $word_count_str
 
-                # INICIO DEL CICLO FOR ------------------------------------------
+
+
+                # ESCRIBO EL ENCABEZADO DEL PGM EN EL ARCHIVO
+                lh      a0, VAR_fd($fp)             # a0 = fd
+                la		a1, BUFFER		            # a1 = BUFFER* 
+                lw		a2, VAR_word_count($fp)		# a2 = word_count
+                li	    v0, SYS_write
+                syscall
+
+                
+                # RESETEO el contador de palabras a escribir
+                sw		zero, VAR_word_count($fp)
+
+
+                # INICIO DEL CICLO FOR ---------------------------------------------------
 
                 # for (y = 0, ci = parms->UL_im; y < parms->y_res; ++y, ci -= parms->d_im)
                 sw		zero, VAR_y($fp)        # y = 0
@@ -356,16 +406,41 @@ $for_c_end:
                 add		t3, t0, t2      		# t3 = $dnames[c]
                 lw		t4, 0(t3)               # t4 = direccion de palabra a escribir
                 
-                lh      a0, VAR_fd($fp)         # a0 = fd
-                move 	a1, t4		            # a1 = t4
-                li		a2, 4		            # a2 =4 
+                # GUARDO UNA PALABRA EN EL BUFFER
+                lw		t5, 0(t4)		        # t5 = palabra a guardar en buffer
+                lw      t6, VAR_word_count($fp) # t6 = word_count
+                sll     t7, t6, 2               # t7 = word_count * 4
+                la		t8, BUFFER		        # t8 = BUFFER*
+                add		t8, t7, t8		        # t8 = BUFFER[word_count]
+                sw		t5, 0(t8)		        # guardo una palabra en el buffer
+                li		t0, BUFFER_LIMIT		# t0 = BUFFER_LIMIT
+                addi	t6, t6, 1			    # t6 = t6 + 1
+                sw		t6, VAR_word_count($fp)	# word_count++
+                blt		t6, t0, $augment_x	    # if t6 < t0 then $augment_x 
+                nop
+
+                # IMPRIMO EL word_count AL MOMENTO DE VACIAR EL BUFFER
+                lw		t0, VAR_word_count($fp)
+                print_int t0 $word_count_str
+                
+
+                # VACIO TODO EL CONTENIDO DEL BUFFER Y LO ESCRIBO EN EL ARCHIVO
+                lh      a0, VAR_fd($fp)             # a0 = fd
+                la		a1, BUFFER		            # a1 = BUFFER 
+                #li		a2, 400		                # a2 = 400
+                lw		a2, VAR_word_count($fp)		# a2 = word_count
+                sll     a2, a2, 2                   # a2 = word_count * 4
                 li	    v0, SYS_write
                 syscall
+
                 # IMPRIMO LA CANT DE CARACTERES ESCRITOS
-                move 	t0, v0		            # t0 = a0
+                move 	t0, v0		                # t0 = a0
                 print_int t0 $ch_written_str
+
+                sw		zero, VAR_word_count($fp)   # word_count = 0
+
+$augment_x:
                 print_c
-                # print_string $digwrite_str 
 
                 l.s     $f0, VAR_cr($fp)        # f0 = cr
                 l.s     $f2, VAR_d_re($fp)      # f2 = parms->d_re
@@ -392,11 +467,25 @@ $for_x_end:     blt		t0, t1, $for_x      	# if t0 < t1 then $for_x
                 lw		t1, VAR_y_res($fp)      # t1 = y_res
 $for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
                 nop
+
+                # SI NO QUEDAN PALABRAS EN EL BUFFER PROCEDO A CERRAR EL ARCHIVO
+                lw		t0, VAR_word_count($fp)		# t0 = word_count
+                beq		t0, zero, $close_file	    # if t0 == zero then $close_file
+                nop
                 
+                # SI QUEDAN PALABRAS EN EL BUFFER PROCEDO A ESCRIBIR LO QUE FALTA
+                lh      a0, VAR_fd($fp)             # a0 = fd
+                la		a1, BUFFER		            # a1 = BUFFER 
+                lw		a2, VAR_word_count($fp)		# a2 = word_count
+                sll     a2, a2, 2                   # a2 = word_count * 4
+                li	    v0, SYS_write
+                syscall
+                # IMPRIMO LA CANT DE CARACTERES ESCRITOS
+                move 	t0, v0		                # t0 = a0
+                print_int t0 $ch_written_str
 
-                sw		zero, VAR_foo($fp)
 
-
+$close_file:
                 print_string $closefile_str
                 
                 # CIERRO EL ARCHIVO                
@@ -430,23 +519,21 @@ $int_str:       .asciiz "valor: %d\n"
 $foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
 $debug_str:     .asciiz "MARCA: %d\n"
 $absz_str:      .asciiz "absz: %f\n"
-$abszlt4_str:      .asciiz "absz < 4.0f\n"
+$abszlt4_str:   .asciiz "absz < 4.0f\n"
 $digwrite_str:  .asciiz "DIGITO+\n"
 $ch_written_str: .asciiz "caracteres escritos: %d\n"
 $forc_end_str:  .asciiz "FOR_C END!\n"
 $four_str:      .asciiz "four: %f\n"
 $two_str:       .asciiz "two: %f\n"
 $closefile_str: .asciiz "CERRANDO ARCHIVO!\n"
+$word_count_str: .asciiz "word_count: %d\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"
 $c_str:         .asciiz "c = %d\n"
 
-$P2_head:       .ascii "P2\n"
-$new_line:      .ascii "\n"
-
-BUFFER:         .space 40
-
+                .align 2
+$P2_head:       .ascii "P2 \n"
 $d0:            .ascii "0  \n"
 $d1:            .ascii "1  \n"
 $d2:            .ascii "2  \n"
@@ -704,4 +791,9 @@ $d253:          .ascii "253\n"
 $d254:          .ascii "254\n"
 $d255:          .ascii "255\n"
 $d256:          .ascii "256\n"
+
+                .align 2
+BUFFER:         .space 400
+
+
 
