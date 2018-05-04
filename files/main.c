@@ -46,7 +46,7 @@ static void parse_cmdline(int, char *const[]);
 static void do_usage(const char *, int);
 static void do_version(const char *);
 static void do_resolution(const char *, const char *);
-static void do_geometry(const char *, const char *);
+static void do_seed(const char *, const char *);
 static void do_center(const char *, const char *);
 static void do_width(const char *, const char *);
 static void do_height(const char *, const char *);
@@ -67,7 +67,7 @@ static void parse_cmdline(int argc, char *const argv[]) {
   struct option options[] = {
       {"help", no_argument, NULL, 'h'},
       {"version", no_argument, NULL, 'V'},
-      {"geometry", required_argument, NULL, 'g'},
+      {"seed", required_argument, NULL, 's'},
       {"resolution", required_argument, NULL, 'r'},
       {"center", required_argument, NULL, 'c'},
       {"width", required_argument, NULL, 'w'},
@@ -75,7 +75,7 @@ static void parse_cmdline(int argc, char *const argv[]) {
       {"output", required_argument, NULL, 'o'},
   };
 
-  while ((ch = getopt_long(argc, argv, "hc:H:m:o:r:w:g:V", options, &index)) !=
+  while ((ch = getopt_long(argc, argv, "hc:H:m:o:r:w:s:V", options, &index)) !=
          -1) {
     switch (ch) {
       case 'h':
@@ -84,8 +84,8 @@ static void parse_cmdline(int argc, char *const argv[]) {
       case 'V':
         do_version(argv[0]);
         break;
-      case 'g':
-        do_geometry(argv[0], optarg);
+      case 's':
+        do_seed(argv[0], optarg);
         break;
       case 'r':
         do_resolution(argv[0], optarg);
@@ -163,7 +163,7 @@ static void do_resolution(const char *name, const char *spec) {
   y_res = y;
 }
 
-static void do_geometry(const char *name, const char *spec) {
+static void do_seed(const char *name, const char *spec) {
   double re_1, im_1;
   double re_2, im_2;
   char comma;
@@ -180,7 +180,7 @@ static void do_geometry(const char *name, const char *spec) {
              &ii_1, &comma, &re_2, &sg_2, &im_2, &ii_2, &ch) != 9 ||
       !PLUS_OR_MINUS(sg_1) || !PLUS_OR_MINUS(sg_2) || !IMAGINARY_UNIT(ii_1) ||
       !IMAGINARY_UNIT(ii_2) || comma != ',') {
-    fprintf(stderr, "invalid geometry specification.\n");
+    fprintf(stderr, "invalid seed specification.\n");
     exit(1);
   }
 
