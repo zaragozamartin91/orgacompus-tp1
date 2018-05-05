@@ -35,7 +35,7 @@
 
 #define VAR_word_count 108
 
-#define BUFFER_LIMIT 256
+#define BUFFER_LIMIT 1024
 
 #define WRITE_ERROR 9
 
@@ -707,8 +707,9 @@ $d254:          .ascii "254\n"
 $d255:          .ascii "255\n"
 $d256:          .ascii "256\n"
 
+# DEFINO UN BUFFER DE 4KB PARA LUEGO ESCRIBIR SOBRE EL ARCHIVO
                 .align 2
-BUFFER:         .space 1024
+BUFFER:         .space 4096
 
 
 
