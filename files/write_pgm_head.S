@@ -18,9 +18,9 @@
 	.abicalls
 	.align 2		
 
-	.globl	print_dnames
-	.ent	print_dnames
-print_dnames:
+	.globl	write_pgm_head
+	.ent	write_pgm_head
+write_pgm_head:
 	
 	.frame	$fp, FRAME_SIZE, ra	
 	.set	noreorder				
@@ -55,9 +55,9 @@ print_dnames:
 	lw		a0, VAR_n($fp)			
 	lw  	a1, VAR_buffer($fp)
 	lw 		a2, VAR_wcount($fp)
-	la		t9, print_dnames
+	la		t9, write_pgm_head
 	jal		ra, t9
-	sw		v0, VAR_wcount($fp)			# word_count = print_dnames(n)
+	sw		v0, VAR_wcount($fp)			# word_count = write_pgm_head(n)
 	
 
 _write_name:
@@ -83,6 +83,6 @@ $cleanup:
 	addu	sp, sp, FRAME_SIZE
 	jr		ra
 
-	.end	print_dnames
-	.size	print_dnames,.-print_dnames
+	.end	write_pgm_head
+	.size	write_pgm_head,.-write_pgm_head
 

@@ -185,7 +185,7 @@ $init_vars:
                 lw		a0, VAR_x_res($fp)
                 la      a1, BUFFER
                 lw		a2, VAR_word_count($fp)
-                la	    t9, print_dnames
+                la	    t9, write_pgm_head
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
                 write_new_line_to_buffer
@@ -195,7 +195,7 @@ $init_vars:
                 lw		a0, VAR_y_res($fp)
                 la      a1, BUFFER
                 lw		a2, VAR_word_count($fp)
-                la	    t9, print_dnames
+                la	    t9, write_pgm_head
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
                 write_new_line_to_buffer
@@ -205,7 +205,7 @@ $init_vars:
                 subu    a0,a0,1
                 la      a1, BUFFER
                 lw		a2, VAR_word_count($fp)
-                la	    t9, print_dnames
+                la	    t9, write_pgm_head
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
                 write_new_line_to_buffer
