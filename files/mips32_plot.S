@@ -128,6 +128,15 @@
                     syscall
                 .endm
 
+                .macro write_sysclose_error
+                    # ESCRIBO UN MENSAJE DE ERROR EN STDERR
+                    li		a0, STDERR		            # a0 = STDERR
+                    la      a1, $close_err_msg
+                    li      a2, 26
+                    li	    v0, SYS_write
+                    syscall
+                .endm
+
                 .macro write_new_line_to_buffer
                     li		t0, 10		                # t0 = \n
                     la		t1, BUFFER                  # t1 = BUFFER*
@@ -498,9 +507,20 @@ $close_file:
                 
                 # CIERRO EL ARCHIVO                
                 lh      a0 , VAR_fd($fp)
+                # MARCO UN fd incorrecto para pruebas
+                #li		a0, 555		                # a0 = 555
                 li		v0, SYS_close
                 syscall
-                print_int   v0 , $int_str
+                
+
+                # CHEQUEO UN ERROR DE CIERRE DEL ARCHIVO
+                li		t0, WRITE_ERROR		        # t0 = WRITE_ERROR
+                bne		v0, t0, $cleanup	        # if v0 != WRITE_ERROR then $cleanup
+                nop
+                write_sysclose_error
+                li		a0, 1		                # a0 = 1
+                li		v0, SYS_exit		        # v0 = SYS_exit
+                syscall
 
 
 $cleanup:        
@@ -537,6 +557,7 @@ $two_str:       .asciiz "two: %f\n"
 $closefile_str: .asciiz "CERRANDO ARCHIVO!\n"
 $word_count_str: .asciiz "word_count: %d\n"
 $write_err_msg: .ascii "i/o error.\n"
+$close_err_msg: .ascii "cannot flush output file.\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"
