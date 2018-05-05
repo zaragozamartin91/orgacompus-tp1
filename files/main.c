@@ -123,30 +123,37 @@ static void parse_cmdline(int argc, char *const argv[]) {
 }
 
 static void do_usage(const char *name, int status) {
-  fprintf(stderr, "Usage:\n");
+  fprintf(stderr, "Uso:\n");
   fprintf(stderr, "  %s -h\n", name);
   fprintf(stderr, "  %s -V\n", name);
-  fprintf(stderr, "  %s [options]\n", name);
-  fprintf(stderr, "Options:\n");
+  fprintf(stderr, "  %s [opciones]\n", name);
+  fprintf(stderr, "Opciones:\n");
   fprintf(stderr,
           "  -r, --resolution "
-          " Set bitmap resolution to WxH pixels.\n");
+          " Establece la resolucion a WxH pixeles.\n");
   fprintf(stderr,
           "  -c, --center     "
-          " Set coordinates for the center of the image.\n");
+          " Establece las coordenadas del centro de la imagen.\n");
   fprintf(stderr,
           "  -w, --width      "
-          " Change the width of the spanned region.\n");
+          " Cambia la anchura de la region del plano complejo.\n");
   fprintf(stderr,
           "  -H, --height     "
-          " Change the height of the spanned region.\n");
+          " Cambia la altura de la region del plano complejo.\n");
   fprintf(stderr,
           "  -o, --output     "
-          " Path to output file.\n");
-  fprintf(stderr, "Examples:\n");
+          " Path de archivo de salida.\n");
+  fprintf(stderr,
+          "  -s, --seed       "
+          " Seed o semilla de partida del generador.\n");
+  fprintf(stderr,
+            "  -m, --method     "
+            " Metodo o implementacion de renderizacion del generador [mips32 , generic].\n");        
+  fprintf(stderr, "Ejemplos:\n");
   fprintf(stderr, "  %s -o output.pgm\n", name);
   fprintf(stderr, "  %s -r 1600x1200 -o output.pgm\n", name);
   fprintf(stderr, "  %s -c +0.282+0.01i -o output.pgm\n", name);
+  fprintf(stderr, "  %s -w 4 -H 2 -m mips32 > out.pgm\n", name);
   exit(status);
 }
 
@@ -178,7 +185,7 @@ static void do_seed(const char *name, const char *spec) {
     seed_re = re;
     seed_im = im;
   } else {
-    fprintf(stderr, "invalid seed specification.\n");
+    fprintf(stderr, "semilla invalida.\n");
     exit(1);
   }
 }
@@ -193,7 +200,7 @@ static void do_center(const char *name, const char *spec) {
 
   if (sscanf(spec, "%lf %c %lf %c %c", &re, &sg, &im, &ii, &ch) != 4 ||
       !PLUS_OR_MINUS(sg) || !IMAGINARY_UNIT(ii)) {
-    fprintf(stderr, "invalid center specification.\n");
+    fprintf(stderr, "centro invalido.\n");
     exit(1);
   }
 
@@ -214,7 +221,7 @@ static void do_height(const char *name, const char *spec) {
   char ch;
 
   if (sscanf(spec, "%lf %c", &height, &ch) != 1 || height <= 0.0) {
-    fprintf(stderr, "invalid height specification.\n");
+    fprintf(stderr, "altura invalida.\n");
     exit(1);
   }
 
@@ -235,7 +242,7 @@ static void do_width(const char *name, const char *spec) {
   char ch;
 
   if (sscanf(spec, "%lf %c", &width, &ch) != 1 || width <= 0.0) {
-    fprintf(stderr, "invalid width specification.\n");
+    fprintf(stderr, "anchura invalida.\n");
     exit(1);
   }
 
@@ -259,14 +266,14 @@ static void do_method(const char *name, const char *spec) {
   if (mips32_cmp == 0) plot = &mips32_plot;
 
   if (plot == NULL) {
-    fprintf(stderr, "Paramtro -m invalido!\n");
+    fprintf(stderr, "Especificacion de metodo de renderizacion invalido\n");
     exit(1);
   }
 }
 
 static void do_output(const char *name, const char *spec) {
   if (output != NULL) {
-    fprintf(stderr, "multiple do output files.");
+    fprintf(stderr, "Multiples archivos de salida indicados.");
     exit(1);
   }
 
@@ -274,7 +281,7 @@ static void do_output(const char *name, const char *spec) {
     output = stdout;
   } else {
     if (!(output = fopen(spec, "w"))) {
-      fprintf(stderr, "cannot open output file.\n");
+      fprintf(stderr, "No es posible abrir el archivo de salida.\n");
       exit(1);
     }
   }
@@ -297,21 +304,6 @@ static void do_plot(void) {
   parms.shades = 256;
   parms.fp = output;
 
-  //printf("Parametros de entrada:\n");
-  //printf("parms.UL_re: %f\n", parms.UL_re);
-  //printf("parms.UL_im: %f\n", parms.UL_im);
-  //printf("parms.LR_re: %f\n", parms.LR_re);
-  //printf("parms.LR_im: %f\n", parms.LR_im);
-  //printf("parms.d_re: %f\n", parms.d_re);
-  //printf("parms.d_im: %f\n", parms.d_im);
-  //printf("parms.s_re: %f\n", parms.s_re);
-  //printf("parms.s_im: %f\n", parms.s_im);
-  //printf("parms.x_res: %d\n", parms.x_res);
-  //printf("parms.y_res: %d\n", parms.y_res);
-  //printf("parms.shades: %d\n", parms.shades);
-
-  //int fd = fileno(parms.fp);
-  //printf("file descriptor is: %d\n", fd);
 
   plot(&parms);
 }
