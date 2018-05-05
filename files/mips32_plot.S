@@ -48,77 +48,6 @@
                 .abicalls
                 .text
 
-                .macro print_string mystring
-                    la      a0,\mystring
-                    la      t9,printf
-                    jal     ra,t9
-                .endm
-
-                # APLICA printf($templ %s)
-                .macro printf_string $templ $strreg 
-                    la      a0,\$templ
-                    move 	a1,\$strreg		# a1 = $strreg
-                    la      t9,printf
-                    jal     ra,t9
-                .endm
-
-                # Escribe un numero en un archivo
-                .macro write_number $numreg $fd
-                    la	    a1, $dnames
-                    add		a1, a1, \$numreg
-                    lw		a1, 0(a1)
-                    li	    a0, \$fd
-                    li	    a2, 4
-                    li	    v0, SYS_write
-                    syscall
-                .endm
-
-                #NOTA: RECORDAR RESTAURAR EL VALOR DE a0 LUEGO DE CADA PRINT!
-                # Imprime un numero entero
-                .macro print_int $reg $str
-                    la      a0, \$str		        # cargo la direccion de str en a0
-                    move    a1, \$reg		                
-                    la      t9,printf
-                    jal     ra,t9
-                .endm
-
-                #NOTA: RECORDAR RESTAURAR EL VALOR DE a0 LUEGO DE CADA PRINT!
-                # Imprime un float por STDOUT
-                # $freg0: registro con valor de float a imprimir
-                # $freg1: SIGUIENTE registro a $freg0
-                # $str: template de string a usar
-                .macro print_float $freg0 $freg1 $str
-                    cvt.d.s \$freg0,\$freg0
-                    la      a0,\$str
-                    mfc1    a2,\$freg0
-                    mfc1    a3,\$freg1
-                    la      t9,printf
-                    jal     ra,t9
-                .endm
-
-                # escribe por stdout un string "MARCA $mark"
-                .macro print_debug_mark $mark
-                    li		t0, \$mark
-                    print_int  t0 , $debug_str
-                .endm
-
-                # escribe por stdout el contenido de la variable y
-                .macro print_y
-                    lw		t0, VAR_y($fp)
-                    print_int t0 , $y_str
-                .endm
-
-                # escribe por stdout el contenido de la variable x
-                .macro print_x
-                    lw		t0, VAR_x($fp)
-                    print_int t0 , $x_str
-                .endm
-
-                .macro print_c
-                    lw		t0, VAR_c($fp)
-                    print_int t0 , $c_str
-                .endm
-
                 .macro write_syswrite_error
                     # ESCRIBO UN MENSAJE DE ERROR EN STDERR
                     li		a0, STDERR		            # a0 = STDERR
@@ -145,7 +74,6 @@
                     sb		t0, 0(t3)		            # BUFFER[word_count] = \n
                     addi	t2, t2, 1			        # t2 = word_count + 1
                     sw		t2, VAR_word_count($fp)		# word_count++
-                    print_int t2 $word_count_str
                 .endm
 
                 .align  2
@@ -221,10 +149,6 @@ $init_vars:
                 lh	    t1, 0(t0)		             # t1 = fd
                 sh      t1, VAR_fd($fp)              
 
-                l.s     $f0 , $float_four
-                print_float $f0 , $f1 , $four_str
-                l.s     $f0 , $float_two
-                print_float $f0 , $f1 , $two_str
 
                 # INICIALIZO LAS VARIABLES LOCALES DE LA FUNCION C 
 
@@ -264,8 +188,6 @@ $init_vars:
                 la	    t9, print_dnames
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
-                print_int v0 $word_count_str
-
                 write_new_line_to_buffer
 
 
@@ -276,11 +198,7 @@ $init_vars:
                 la	    t9, print_dnames
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
-                print_int v0 $word_count_str
-                
                 write_new_line_to_buffer
-
-
 
 
                 lw		a0, VAR_shades($fp)
@@ -290,8 +208,6 @@ $init_vars:
                 la	    t9, print_dnames
 	            jal	    ra, t9
                 sw		v0, VAR_word_count($fp)     
-                print_int v0 $word_count_str
-                
                 write_new_line_to_buffer
 
 
@@ -327,7 +243,6 @@ $write_ok_1:
                 s.s     $f0, VAR_ci($fp)        # ci = parms->UL_im
 
 $for_y:         
-                print_y
                 
                 # for (x = 0, cr = parms->UL_re; x < parms->x_res; ++x, cr += parms->d_re)
                 sw		zero, VAR_x($fp)        # x = 0
@@ -335,8 +250,6 @@ $for_y:
                 s.s     $f0, VAR_cr($fp)        # cr = parms->UL_re
                 
 $for_x:         
-
-                print_x
 
                 l.s $f0,VAR_cr($fp)             # f0 = cr
                 s.s $f0,VAR_zr($fp)             # zr = cr
@@ -357,16 +270,13 @@ $for_c:
                 mul.s   $f2 , $f2 , $f2         # f2 = zi * zi
                 add.s   $f4 , $f2 , $f0         # f4 = zr * zr + zi * zi
                 s.s     $f4 , VAR_absz($fp)     # absz = zr * zr + zi * zi
-                l.s     $f10 , VAR_absz($fp)
-                print_float $f10 , $f11 , $absz_str
+                
 
                 l.s     $f2 , VAR_absz($fp)     # f2 = absz
                 l.s     $f0 , $float_four       # f0 = 4.0
                 c.lt.s  $f0,$f2                 # si f0 < f2 entonces SET TRUE
                 bc1t    $for_c_end
                 nop
-
-                print_string $abszlt4_str
                 
 
                 # tr = parms->s_re + zr * zr - zi * zi;
@@ -400,9 +310,7 @@ $for_c:
                 blt		t0, t1, $for_c	        # if c < parms->shades then $for_c
                 nop
 
-$for_c_end:
-                print_string $forc_end_str
-                
+$for_c_end:                
 
                 # fprintf(parms->fp, "%u\n", (unsigned)c)
                 lw		t0, VAR_c($fp)		    # t0 = c
@@ -423,10 +331,6 @@ $for_c_end:
                 sw		t6, VAR_word_count($fp)	# word_count++
                 blt		t6, t0, $augment_x	    # if t6 < t0 then $augment_x 
                 nop
-
-                # IMPRIMO EL word_count AL MOMENTO DE VACIAR EL BUFFER
-                lw		t0, VAR_word_count($fp)
-                print_int t0 $word_count_str
                 
 
                 # VACIO TODO EL CONTENIDO DEL BUFFER Y LO ESCRIBO EN EL ARCHIVO
@@ -451,7 +355,6 @@ $write_ok_2:
                 sw		zero, VAR_word_count($fp)   # word_count = 0
 
 $augment_x:
-                print_c
 
                 l.s     $f0, VAR_cr($fp)        # f0 = cr
                 l.s     $f2, VAR_d_re($fp)      # f2 = parms->d_re
@@ -465,7 +368,6 @@ $augment_x:
 $for_x_end:     blt		t0, t1, $for_x      	# if t0 < t1 then $for_x
                 nop
                 
-
 
                 l.s     $f0, VAR_ci($fp)        # f0 = ci
                 l.s     $f2, VAR_d_im($fp)      # f2 = params->d_im
@@ -503,7 +405,6 @@ $for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
 
 
 $close_file:
-                print_string $closefile_str
                 
                 # CIERRO EL ARCHIVO                
                 lh      a0 , VAR_fd($fp)
@@ -543,25 +444,8 @@ $float_two:     .word   1073741824
 
 
                 .align 0
-$float_str:     .asciiz "valor: %f\n"
-$int_str:       .asciiz "valor: %d\n"
-$foo_str:       .asciiz "INICIANDO mips32_plot.S \n"
-$debug_str:     .asciiz "MARCA: %d\n"
-$absz_str:      .asciiz "absz: %f\n"
-$abszlt4_str:   .asciiz "absz < 4.0f\n"
-$digwrite_str:  .asciiz "DIGITO+\n"
-$ch_written_str: .asciiz "caracteres escritos: %d\n"
-$forc_end_str:  .asciiz "FOR_C END!\n"
-$four_str:      .asciiz "four: %f\n"
-$two_str:       .asciiz "two: %f\n"
-$closefile_str: .asciiz "CERRANDO ARCHIVO!\n"
-$word_count_str: .asciiz "word_count: %d\n"
 $write_err_msg: .ascii "i/o error.\n"
 $close_err_msg: .ascii "cannot flush output file.\n"
-
-$y_str:         .asciiz "y = %d\n"
-$x_str:         .asciiz "x = %d\n"
-$c_str:         .asciiz "c = %d\n"
 
                 .align 2
 $P2_head:       .ascii "P2 \n"
