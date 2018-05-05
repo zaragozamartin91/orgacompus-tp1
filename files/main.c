@@ -250,10 +250,10 @@ static void do_width(const char *name, const char *spec) {
 }
 
 static void do_method(const char *name, const char *spec) {
-  printf("name: %s , spec: %s\n", name, spec);
+  //printf("name: %s , spec: %s\n", name, spec);
   int generic_cmp = strcmp("generic", spec);
   int mips32_cmp = strcmp("mips32", spec);
-  printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp, mips32_cmp);
+  //printf("generic_cmp: %d , mips32_cmp: %d\n", generic_cmp, mips32_cmp);
 
   if (generic_cmp == 0) plot = &generic_plot;
   if (mips32_cmp == 0) plot = &mips32_plot;
@@ -297,21 +297,21 @@ static void do_plot(void) {
   parms.shades = 256;
   parms.fp = output;
 
-  printf("Parametros de entrada:\n");
-  printf("parms.UL_re: %f\n", parms.UL_re);
-  printf("parms.UL_im: %f\n", parms.UL_im);
-  printf("parms.LR_re: %f\n", parms.LR_re);
-  printf("parms.LR_im: %f\n", parms.LR_im);
-  printf("parms.d_re: %f\n", parms.d_re);
-  printf("parms.d_im: %f\n", parms.d_im);
-  printf("parms.s_re: %f\n", parms.s_re);
-  printf("parms.s_im: %f\n", parms.s_im);
-  printf("parms.x_res: %d\n", parms.x_res);
-  printf("parms.y_res: %d\n", parms.y_res);
-  printf("parms.shades: %d\n", parms.shades);
+  //printf("Parametros de entrada:\n");
+  //printf("parms.UL_re: %f\n", parms.UL_re);
+  //printf("parms.UL_im: %f\n", parms.UL_im);
+  //printf("parms.LR_re: %f\n", parms.LR_re);
+  //printf("parms.LR_im: %f\n", parms.LR_im);
+  //printf("parms.d_re: %f\n", parms.d_re);
+  //printf("parms.d_im: %f\n", parms.d_im);
+  //printf("parms.s_re: %f\n", parms.s_re);
+  //printf("parms.s_im: %f\n", parms.s_im);
+  //printf("parms.x_res: %d\n", parms.x_res);
+  //printf("parms.y_res: %d\n", parms.y_res);
+  //printf("parms.shades: %d\n", parms.shades);
 
-  int fd = fileno(parms.fp);
-  printf("file descriptor is: %d\n", fd);
+  //int fd = fileno(parms.fp);
+  //printf("file descriptor is: %d\n", fd);
 
   plot(&parms);
 }
