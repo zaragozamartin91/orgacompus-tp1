@@ -37,8 +37,10 @@
 
 #define BUFFER_LIMIT 256
 
+#define WRITE_ERROR 9
 
 #define STDOUT 1
+#define STDERR 2
 
 
 
@@ -117,6 +119,26 @@
                     print_int t0 , $c_str
                 .endm
 
+                .macro write_syswrite_error
+                    # ESCRIBO UN MENSAJE DE ERROR EN STDERR
+                    li		a0, STDERR		            # a0 = STDERR
+                    la      a1, $write_err_msg
+                    li      a2, 11
+                    li	    v0, SYS_write
+                    syscall
+                .endm
+
+                .macro write_new_line_to_buffer
+                    li		t0, 10		                # t0 = \n
+                    la		t1, BUFFER                  # t1 = BUFFER*
+                    lw		t2, VAR_word_count($fp)     # t2 = word_count
+                    add		t3, t2, t1                  # t3 = BUFFER[word_count]*
+                    sb		t0, 0(t3)		            # BUFFER[word_count] = \n
+                    addi	t2, t2, 1			        # t2 = word_count + 1
+                    sw		t2, VAR_word_count($fp)		# word_count++
+                    print_int t2 $word_count_str
+                .endm
+
                 .align  2
 
                 .globl  mips32_plot
@@ -133,9 +155,6 @@ mips32_plot:
                 sw      gp,REG_GP(sp)
                 move    $fp,sp
                 sw      a0,FRAME_SIZE($fp)    
-
-$start:
-                #print_string $foo_str
                 
 
 $init_vars:
@@ -144,68 +163,54 @@ $init_vars:
                 # EXTRAIGO LOS CAMPOS DEL STRUCT param Y LAS GUARDO EN VARIABLES LOCALES
                 l.s		$f0, 0(a0)
                 s.s		$f0, VAR_UL_re($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 4(a0)
                 s.s		$f0, VAR_UL_im($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 8(a0)
                 s.s		$f0, VAR_LR_re($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 12(a0)
                 s.s		$f0, VAR_LR_im($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 16(a0)
                 s.s		$f0, VAR_d_re($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 20(a0)
                 s.s		$f0, VAR_d_im($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 24(a0)
                 s.s		$f0, VAR_s_re($fp)
-                # print_float $f0 , $f1 , $float_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 l.s		$f0, 28(a0)
                 s.s		$f0, VAR_s_im($fp)
-                # print_float $f0 , $f1 , $float_str
 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 lw		t0, 32(a0)
                 sw		t0, VAR_x_res($fp)
-                # print_int t0 , $int_str
 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 lw		t0, 36(a0)
                 sw		t0, VAR_y_res($fp)	
-                # print_int t0 , $int_str
                 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 lw		t0, 40(a0)
                 sw		t0, VAR_shades($fp)
-                # print_int t0 , $int_str
 
                 lw	    a0, FRAME_SIZE($fp)          # a0 = *parms
                 lw		t0, 44(a0)
                 addi	t0, t0, 14			         # t0 = direccion del fd
                 lh	    t1, 0(t0)		             # t1 = fd
-                sh      t1, VAR_fd($fp)
-
-                lh      t0 , VAR_fd($fp)                
-                # print_int t0 , $int_str
+                sh      t1, VAR_fd($fp)              
 
                 l.s     $f0 , $float_four
                 print_float $f0 , $f1 , $four_str
@@ -231,6 +236,8 @@ $init_vars:
 
 
                 # COMIENZO DE ESCRITURA DE ENCABEZADO ----------------------------------------------
+                # LA ESCRITURA PRIMERO SE HACE EN UN BUFFER Y LUEGO SE VUELCA EL BUFFER AL ARCHIVO
+
                 la		t0, $P2_head                # t0 = P2_HEAD*
                 lw		t1, 0(t0)                   # t1 = P2_HEAD
                 lw		t2, VAR_word_count($fp)		# t2 = word_count
@@ -250,15 +257,7 @@ $init_vars:
                 sw		v0, VAR_word_count($fp)     
                 print_int v0 $word_count_str
 
-                
-                li		t0, 10		                # t0 = \n
-                la		t1, BUFFER                  # t1 = BUFFER*
-                lw		t2, VAR_word_count($fp)     # t2 = word_count
-                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
-                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
-                addi	t2, t2, 1			        # t2 = word_count + 1
-                sw		t2, VAR_word_count($fp)		# word_count++
-                print_int t2 $word_count_str
+                write_new_line_to_buffer
 
 
 
@@ -270,14 +269,7 @@ $init_vars:
                 sw		v0, VAR_word_count($fp)     
                 print_int v0 $word_count_str
                 
-                li		t0, 10		                # t0 = \n
-                la		t1, BUFFER                  # t1 = BUFFER*
-                lw		t2, VAR_word_count($fp)     # t2 = word_count
-                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
-                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
-                addi	t2, t2, 1			        # t2 = word_count + 1
-                sw		t2, VAR_word_count($fp)		# word_count++
-                print_int t2 $word_count_str
+                write_new_line_to_buffer
 
 
 
@@ -291,25 +283,29 @@ $init_vars:
                 sw		v0, VAR_word_count($fp)     
                 print_int v0 $word_count_str
                 
-                li		t0, 10		                # t0 = \n
-                la		t1, BUFFER                  # t1 = BUFFER*
-                lw		t2, VAR_word_count($fp)     # t2 = word_count
-                add		t3, t2, t1                  # t3 = BUFFER[word_count]*
-                sb		t0, 0(t3)		            # BUFFER[word_count] = \n
-                addi	t2, t2, 1			        # t2 = word_count + 1
-                sw		t2, VAR_word_count($fp)		# word_count++
-                print_int t2 $word_count_str
-
+                write_new_line_to_buffer
 
 
                 # ESCRIBO EL ENCABEZADO DEL PGM EN EL ARCHIVO
                 lh      a0, VAR_fd($fp)             # a0 = fd
+                # CARGO UN FD INCORRECTO PARA PRUEBAS
+                #li		a0, 555		                # a0 = 555
                 la		a1, BUFFER		            # a1 = BUFFER* 
                 lw		a2, VAR_word_count($fp)		# a2 = word_count
                 li	    v0, SYS_write
                 syscall
 
+                # CHEQUEO UN ERROR DE ESCRITURA EN EL ARCHIVO
+                li		t0, WRITE_ERROR		        # t0 = WRITE_ERROR
+                bne		v0, t0, $write_ok_1	        # if v0 != WRITE_ERROR then $write_ok_1
+                nop
+                write_syswrite_error
+                li		a0, 1		                # a0 = 1
+                li		v0, SYS_exit		        # v0 = SYS_exit
+                syscall
                 
+
+$write_ok_1:
                 # RESETEO el contador de palabras a escribir
                 sw		zero, VAR_word_count($fp)
 
@@ -427,16 +423,22 @@ $for_c_end:
                 # VACIO TODO EL CONTENIDO DEL BUFFER Y LO ESCRIBO EN EL ARCHIVO
                 lh      a0, VAR_fd($fp)             # a0 = fd
                 la		a1, BUFFER		            # a1 = BUFFER 
-                #li		a2, 400		                # a2 = 400
                 lw		a2, VAR_word_count($fp)		# a2 = word_count
                 sll     a2, a2, 2                   # a2 = word_count * 4
                 li	    v0, SYS_write
                 syscall
 
-                # IMPRIMO LA CANT DE CARACTERES ESCRITOS
-                move 	t0, v0		                # t0 = a0
-                print_int t0 $ch_written_str
+                # CHEQUEO UN ERROR DE ESCRITURA EN EL ARCHIVO
+                li		t0, WRITE_ERROR		        # t0 = WRITE_ERROR
+                bne		v0, t0, $write_ok_2	        # if v0 != WRITE_ERROR then $write_ok_2
+                nop
+                write_syswrite_error
+                li		a0, 1		                # a0 = 1
+                li		v0, SYS_exit		        # v0 = SYS_exit
+                syscall
 
+$write_ok_2:
+                # RESETEO EL CONTADOR DE PALABRAS DEL BUFFER
                 sw		zero, VAR_word_count($fp)   # word_count = 0
 
 $augment_x:
@@ -480,9 +482,15 @@ $for_y_end:     blt		t0, t1, $for_y	        # if y < y_res then $for_y
                 sll     a2, a2, 2                   # a2 = word_count * 4
                 li	    v0, SYS_write
                 syscall
-                # IMPRIMO LA CANT DE CARACTERES ESCRITOS
-                move 	t0, v0		                # t0 = a0
-                print_int t0 $ch_written_str
+
+                # CHEQUEO UN ERROR DE ESCRITURA EN EL ARCHIVO
+                li		t0, WRITE_ERROR		        # t0 = WRITE_ERROR
+                bne		v0, t0, $close_file	        # if v0 != WRITE_ERROR then $close_file
+                nop
+                write_syswrite_error
+                li		a0, 1		                # a0 = 1
+                li		v0, SYS_exit		        # v0 = SYS_exit
+                syscall
 
 
 $close_file:
@@ -493,6 +501,7 @@ $close_file:
                 li		v0, SYS_close
                 syscall
                 print_int   v0 , $int_str
+
 
 $cleanup:        
                 lw		ra, REG_RA(sp)
@@ -527,6 +536,7 @@ $four_str:      .asciiz "four: %f\n"
 $two_str:       .asciiz "two: %f\n"
 $closefile_str: .asciiz "CERRANDO ARCHIVO!\n"
 $word_count_str: .asciiz "word_count: %d\n"
+$write_err_msg: .ascii "i/o error.\n"
 
 $y_str:         .asciiz "y = %d\n"
 $x_str:         .asciiz "x = %d\n"

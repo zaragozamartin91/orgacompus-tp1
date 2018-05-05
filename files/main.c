@@ -314,7 +314,4 @@ static void do_plot(void) {
   printf("file descriptor is: %d\n", fd);
 
   plot(&parms);
-
-  // fflush(parms.fp); // todo : remover
-  // if(fd > 2) fclose(parms.fp);
 }
