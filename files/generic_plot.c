@@ -43,7 +43,7 @@ void generic_plot(param_t *parms) {
       }
 
       if (fprintf(parms->fp, "%u\n", (unsigned)c) < 0) {
-        fprintf(stderr, "i/o error.\n");
+        fprintf(stderr, "Error al escribir el archivo.\n");
         exit(1);
       }
     }
@@ -51,7 +51,7 @@ void generic_plot(param_t *parms) {
 
   /* Flush any buffered information before quit. */
   if (fflush(parms->fp) != 0) {
-    fprintf(stderr, "cannot flush output file.\n");
+    fprintf(stderr, "Error al vaciar el buffer.\n");
     exit(1);
   }
 }

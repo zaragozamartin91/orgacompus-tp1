@@ -52,7 +52,7 @@
                     # ESCRIBO UN MENSAJE DE ERROR EN STDERR
                     li		a0, STDERR		            # a0 = STDERR
                     la      a1, $write_err_msg
-                    li      a2, 11
+                    li      a2, 30
                     li	    v0, SYS_write
                     syscall
                 .endm
@@ -61,7 +61,7 @@
                     # ESCRIBO UN MENSAJE DE ERROR EN STDERR
                     li		a0, STDERR		            # a0 = STDERR
                     la      a1, $close_err_msg
-                    li      a2, 26
+                    li      a2, 30
                     li	    v0, SYS_write
                     syscall
                 .endm
@@ -444,8 +444,8 @@ $float_two:     .word   1073741824
 
 
                 .align 0
-$write_err_msg: .ascii "i/o error.\n"
-$close_err_msg: .ascii "cannot flush output file.\n"
+$write_err_msg: .ascii "Error al escribir el archivo.\n"
+$close_err_msg: .ascii "Error al cerrar el archivo.  \n"
 
                 .align 2
 $P2_head:       .ascii "P2 \n"
